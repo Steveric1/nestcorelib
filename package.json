@@ -1,6 +1,6 @@
 {
   "name": "@nestcorelib/core-lib",
-  "version": "1.0.0",
+  "version": "1.0.1-beta.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -40,7 +40,11 @@
     "nodemailer": "^7.0.5"
   },
   "peerDependenciesMeta": {
-    "@prisma/client": { "optional": true },
-    "typeorm": { "optional": true }
+    "@prisma/client": {
+      "optional": true
+    },
+    "typeorm": {
+      "optional": true
+    }
   }
 }

@@ -1,34 +1,31 @@
 import { Body, Delete, Get, Injectable, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { CoreAuthService } from "./auth.service";
 import { BaseUser } from "./interfaces/base-user.interface";
-import { RegisterDto } from "./dto/register.dto";
-import { LoginDto } from "./dto/login.dto";
-import { UpdateDto } from "./dto/update.dto";
 import { AccessGuard } from "./guards/jwt-auth.guards";
 import { CurrentUser } from "./decorator/current-user.decorator";
 
 
 @Injectable()
-export class CoreAuthController {
-    constructor(private readonly authService: CoreAuthService<BaseUser>) {}
+export class CoreAuthController<TUser extends BaseUser, TCreateDto=Partial<BaseUser>> {
+    constructor(private readonly authService: CoreAuthService<TUser, TCreateDto>) {}
 
     @Post('register')
-    async register(@Body() data: RegisterDto): Promise<BaseUser> {
+    async register(@Body() data: TCreateDto): Promise<TUser> {
         return await this.authService.create(data)
     }
 
     @Post('login')
-    async login(@Body() data: LoginDto) {
+    async login(@Body() data: TCreateDto) {
         return await this.authService.login(data)
     }
 
     @Get('users')
-    async getAll(): Promise<BaseUser[]> {
+    async getAll(): Promise<TUser[]> {
         return await this.authService.findAll();
     }
 
     @Get('user/:id')
-    async getById(@Param('id') id: string | number): Promise<BaseUser> {
+    async getById(@Param('id') id: string | number): Promise<TUser> {
         return await this.authService.findById(id)
     }
 
@@ -61,7 +58,7 @@ export class CoreAuthController {
     }
 
     @Post('reset-password')
-    async resetPassword(@Body() data: { token: string, newPassword: string }): Promise<BaseUser> {
+    async resetPassword(@Body() data: { token: string, newPassword: string }): Promise<TUser> {
         const { token, newPassword } = data;
         return await this.authService.resetPassword(token, newPassword);
     }
@@ -73,20 +70,20 @@ export class CoreAuthController {
     }
 
     @Post('reset-password-otp')
-    async resetPasswordOtp(@Body() data: { otp: string, email: string, newPassword: string }): Promise<BaseUser> {
+    async resetPasswordOtp(@Body() data: { otp: string, email: string, newPassword: string }): Promise<TUser> {
         const { otp, email, newPassword } = data;
         return await this.authService.resetPasswordOtp(otp, email, newPassword);
     }
 
     @UseGuards(AccessGuard)
     @Get('profile')
-    async getProfile(@CurrentUser() user: BaseUser): Promise<BaseUser> {
+    async getProfile(@CurrentUser() user: TUser): Promise<TUser> {
         // Assuming the user is already populated by the AccessGuard
         return user;
     }
 
     @Put('user/:id')
-    async update(@Param('id') id: string | number, @Body() data: UpdateDto): Promise<BaseUser> {
+    async update(@Param('id') id: string | number, @Body() data: TCreateDto): Promise<TUser> {
         return await this.authService.update(id, data)
     }
 

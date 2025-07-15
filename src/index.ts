@@ -1,7 +1,6 @@
 // src/index.ts
 
 // Modules
-export * from './auth/auth.module';
 export { CoreAuthResourceModule } from './auth/auth.module';
 
 // Services

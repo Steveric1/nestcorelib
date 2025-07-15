@@ -23,7 +23,7 @@ import { BaseUser } from "./interfaces/base-user.interface";
 
 
 @Injectable()
-export class AuthService<TUser extends BaseUser, TCreateDto = Partial<BaseUser>> {
+export class CoreAuthService<TUser extends BaseUser, TCreateDto = Partial<BaseUser>> {
     constructor(@Inject(AUTH_REPO_TOKEN) private readonly authRepo: ResourceRepositoryInterface<TUser, TCreateDto>) {}
 
     async create(data: TCreateDto, role?: string): Promise<TUser> {

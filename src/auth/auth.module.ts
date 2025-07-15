@@ -13,23 +13,23 @@ import {
 import { PrismaRepoFactory, TypeOrmRepoFactory } from "./repositories/auth-repo.factory";
 import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
-import { AuthController } from "./auth.controller";
-import { AuthService } from "./auth.service";
+import { CoreAuthController } from "./auth.controller";
+import { CoreAuthService } from "./auth.service";
 import { AccessJwtStrategy, RefreshJwtStrategy } from "./jwt-strategies/jwt.strategies";
 import { DefaultMailer } from "./mail/send.mail";
 import { MAILER } from "./interfaces/mail.interface";
 import { CacheModule } from "@nestjs/cache-manager";
 
 
-export class AuthResourceModule {
+export class CoreAuthResourceModule {
     static forRoot(options: AuthModuleOptions): DynamicModule {
         const providers: Provider[] = [
             { provide: AUTH_CONFIG_TOKEN, useValue: options },
             { provide: ENTITY_TOKEN, useValue: options.Entity },
             AccessJwtStrategy,
             RefreshJwtStrategy,
-            AuthService,
-            AuthController,
+            CoreAuthService,
+            CoreAuthController,
             { provide: MAILER, useClass: DefaultMailer},
         ];
 
@@ -60,7 +60,7 @@ export class AuthResourceModule {
         }
 
         return {
-            module: AuthResourceModule,
+            module: CoreAuthResourceModule,
             imports: [
                 ...(options.orm === 'typeorm' ? [TypeOrmModule.forFeature(typeOrmEntities)] : []),
                 JwtModule.register({
@@ -118,7 +118,7 @@ export class AuthResourceModule {
         })
 
         return {
-            module: AuthResourceModule,
+            module: CoreAuthResourceModule,
             imports: [
                 ...(options.imports || []),
                 PassportModule.register({ defaultStrategy: 'access-jwt' }),
@@ -130,8 +130,8 @@ export class AuthResourceModule {
                 asyncProvider,
                 AccessJwtStrategy,
                 RefreshJwtStrategy,
-                AuthService,
-                AuthController,
+                CoreAuthService,
+                CoreAuthController,
                 { provide: MAILER, useClass: DefaultMailer},
                 ...(options.extraProviders || [])
             ],

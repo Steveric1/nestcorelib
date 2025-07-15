@@ -1,5 +1,5 @@
 import { Body, Delete, Get, Injectable, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
-import { AuthService } from "./auth.service";
+import { CoreAuthService } from "./auth.service";
 import { BaseUser } from "./interfaces/base-user.interface";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
@@ -9,8 +9,8 @@ import { CurrentUser } from "./decorator/current-user.decorator";
 
 
 @Injectable()
-export class AuthController {
-    constructor(private readonly authService: AuthService<BaseUser>) {}
+export class CoreAuthController {
+    constructor(private readonly authService: CoreAuthService<BaseUser>) {}
 
     @Post('register')
     async register(@Body() data: RegisterDto): Promise<BaseUser> {

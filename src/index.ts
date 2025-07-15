@@ -2,6 +2,7 @@
 
 // Modules
 export * from './auth/auth.module';
+export { CoreAuthResourceModule } from './auth/auth.module';
 
 // Services
 export * from './auth/auth.service';

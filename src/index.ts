@@ -1,7 +1,9 @@
 // src/index.ts
 
 // Modules
-export { CoreAuthResourceModule } from './auth/auth.module';
+import { CoreAuthResourceModule as CoreAuthResourceModuleClass } from './auth/auth.module';
+export const CoreAuthResourceModule = CoreAuthResourceModuleClass; // 👈 Ensures it's in runtime output
+export type { CoreAuthResourceModule as CoreAuthResourceModuleType } from './auth/auth.module';
 
 // Services
 export * from './auth/auth.service';

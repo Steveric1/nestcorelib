@@ -52,7 +52,7 @@ export class CoreAuthResourceModule {
                 throw new Error('PrismaClient must be provided when using Prisma ORM');
             }
 
-            providers.push({ provide: PRISMA_CLIENT_TOKEN, useExisting: options.PrismaClient });
+            providers.push({ provide: PRISMA_CLIENT_TOKEN, useValue: options.PrismaClient });
             providers.push(PrismaRepoFactory);
         } else {
             providers.push(TypeOrmRepoFactory);

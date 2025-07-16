@@ -1,6 +1,6 @@
 {
   "name": "@nestcorelib/core-lib",
-  "version": "1.0.1-beta.12",
+  "version": "1.0.1-beta.13",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

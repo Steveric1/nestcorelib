@@ -26,11 +26,15 @@ implements ResourceRepositoryInterface<TUser, TCreateDto> {
 
     private get model() {
         const model = this.options.PrismaModelName || 'user';
+        const availableModels = Object.keys(this.prisma);
 
         if (!this.prisma[model]) {
+            console.error(`[core-lib] Model '${model}' not found in PrismaClient.`);
+            console.log('[core-lib] Available Prisma models:', availableModels);
             throw new Error(`Model ${model} not found in PrismaClient`);
         }
-        return this.prisma[model]
+
+        return this.prisma[model];
     }
 
     async create(data: TCreateDto, role?: string): Promise<TUser> {

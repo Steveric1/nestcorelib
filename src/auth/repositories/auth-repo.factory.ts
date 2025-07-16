@@ -7,6 +7,8 @@ import { AUTH_CONFIG_TOKEN, ENTITY_TOKEN, AuthModuleOptions, PRISMA_CLIENT_TOKEN
 import { JwtService } from "@nestjs/jwt";
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Mailer, MAILER } from "../interfaces/mail.interface";
+import type { Cache } from 'cache-manager';
+
 
 export const TypeOrmRepoFactory = {
     provide: 'ResourceRepositoryInterface',

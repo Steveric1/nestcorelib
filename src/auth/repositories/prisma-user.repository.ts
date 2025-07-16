@@ -9,6 +9,8 @@ import { jwtRefreshSignOptions, jwtSignOptions } from "../utilities/auth.jwt";
 import { Mailer, MAILER } from "../interfaces/mail.interface"
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { verificationType } from "../utilities/verification.utilities";
+import type { Cache } from 'cache-manager';
+
 
 
 

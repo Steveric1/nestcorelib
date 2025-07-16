@@ -10,6 +10,7 @@ import { jwtRefreshSignOptions, jwtSignOptions, jwtVerifyOptions } from "../util
 import { Mailer, MAILER } from "../interfaces/mail.interface";
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { verificationType } from "../utilities/verification.utilities";
+import type { Cache } from 'cache-manager';
 
 
 export class TypeOrmResourceRepository<TUser extends BaseUser, TCreateDto = Partial<BaseUser>> 

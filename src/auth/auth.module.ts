@@ -29,7 +29,6 @@ export class CoreAuthResourceModule {
             AccessJwtStrategy,
             RefreshJwtStrategy,
             CoreAuthService,
-            CoreAuthController,
             { provide: MAILER, useClass: DefaultMailer},
         ];
 
@@ -131,7 +130,6 @@ export class CoreAuthResourceModule {
                 AccessJwtStrategy,
                 RefreshJwtStrategy,
                 CoreAuthService,
-                CoreAuthController,
                 { provide: MAILER, useClass: DefaultMailer},
                 ...(options.extraProviders || [])
             ],

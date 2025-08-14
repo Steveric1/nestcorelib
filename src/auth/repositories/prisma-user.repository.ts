@@ -6,7 +6,7 @@ import { stripPassword } from "../utilities/auth.resource.utility";
 import { BaseUser } from "../interfaces/base-user.interface";
 import { JwtService } from "@nestjs/jwt";
 import { jwtRefreshSignOptions, jwtSignOptions } from "../utilities/auth.jwt";
-import { Mailer, MAILER } from "../interfaces/mail.interface"
+import { Mailer, MAILER } from "../interfaces/mail-sms.interface"
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { verificationType } from "../utilities/verification.utilities";
 import type { Cache } from 'cache-manager';
@@ -33,8 +33,6 @@ implements ResourceRepositoryInterface<TUser, TCreateDto> {
         );
 
         if (!foundModel) {
-            console.error(`[core-lib] Model '${model}' not found in PrismaClient.`);
-            console.log('[core-lib] Available Prisma models:', availableModels);
             throw new Error(`Model ${model} not found in PrismaClient`);
         }
 
@@ -82,7 +80,7 @@ implements ResourceRepositoryInterface<TUser, TCreateDto> {
                 this.options, this.cacheManager, subject
             );
         } else if (this.options.enableOtp === true) {
-            const subject = this.options.emailVerification?.subject || 'OTP Verification';;
+            const subject = this.options.emailVerification?.subject || 'OTP Verification';
             if (!newUser.id || !newUser.email) {
                 throw new NotFoundException(`User with email ${(data as any)?.email} does not have an email address`);
             }
@@ -90,6 +88,15 @@ implements ResourceRepositoryInterface<TUser, TCreateDto> {
                 { type: 'otp', purpose: 'email-verification', via: 'email' }, 
                 this.options, this.cacheManager, subject
             );
+        } else if (this.options.enableSms === true) {
+            const subject =  'SMS OTP Verification';
+            if (!newUser.id || !newUser.phone) {
+                throw new NotFoundException(`User with phone ${(data as any)?.phone} does not exist`)
+            }
+            await verificationType.sendVerification(newUser,
+                { type: 'sms-otp', purpose: 'sms-verification', via: 'sms' },
+                this.options, this.cacheManager, subject
+            )
         }
 
         // remove the password from the created User
@@ -264,19 +271,22 @@ implements ResourceRepositoryInterface<TUser, TCreateDto> {
     async verifyOtp(otp: string, email: string): Promise<{ success: true; message: string; }> {
         try {
             if (!otp || !email) {
-                throw new BadRequestException('Email and OTP are required for verification');
+                    throw new BadRequestException('Email and OTP are required for verification');
             }
-    
+
             const verificationEmail = await verificationType.verify({
                 type: 'otp', value: otp, purpose: 'email-verification', email },
                 this.options, this.cacheManager
             );
-    
-            
+
             const user = await this.model.findUnique({
                 where: { email: verificationEmail }
             })
-    
+
+            if (!user) {
+                throw new NotFoundException(`User with email ${verificationEmail} not found`);
+            }
+
             if (!user) {
                 throw new NotFoundException(`User with email ${verificationEmail} not found`);
             }
@@ -288,13 +298,61 @@ implements ResourceRepositoryInterface<TUser, TCreateDto> {
 
             // update the user to set verified to true
             user.verified = true;
+
             await this.model.update({
                 where: { email: user.email },
                 data: { verified: true }
             })
+
             return {
                 success: true,
                 message: 'Email verified successfully'
+            };
+        } catch (error) {
+            if (error.name === 'TokenExpiredError') {
+                throw new UnauthorizedException('OTP has expired');
+            } else if (error.name === 'JsonWebTokenError') {
+                throw new UnauthorizedException('Invalid OTP');
+            } else {
+                throw new UnauthorizedException(`OTP verification failed: ${error.message}`);
+            }
+        }
+    }
+
+    async verifyPhoneOtp(otp: string, phone: string): Promise<{ success: true, message: string }>{
+        try {
+            if (!otp || !phone) {
+                throw new BadRequestException('Phone and OTP are required for verification');
+            }
+
+            const verificationPhone = await verificationType.verify({
+                type: 'sms-otp', value: otp, purpose: 'sms-verification', phone },
+                this.options, this.cacheManager
+            );
+
+            const user = await this.model.findFirst({
+                where: { phone: verificationPhone }
+            });
+
+            if (!user) {
+                throw new NotFoundException(`User with phone ${verificationPhone} not found`);
+            }
+
+            // If user is already verified, throw an error
+            if (user.verified) {
+                throw new ConflictException(`User with phone ${user.phone} is already verified`);
+            }
+
+            // update the user to set verified to true
+            user.verified = true;
+            await this.model.updateMany({
+                where: { phone: user.id },
+                data: { verified: true }
+            });
+
+            return {
+                success: true,
+                message: 'Phone number verified successfully'
             };
         } catch (error) {
             if (error.name === 'TokenExpiredError') {
@@ -325,6 +383,28 @@ implements ResourceRepositoryInterface<TUser, TCreateDto> {
         )
 
         return { success: true, message: `OTP sent to ${email}` };
+    }
+
+    async resendPhoneOtp(phone: string): Promise<{ success: true; message: string; }> {
+        // find user by phone number
+        const user = await this.model.findFirst({
+            where: { phone }
+        })
+    
+        if (!user) {
+            throw new NotFoundException(`User with phone ${phone} not found`);
+        }
+    
+        if (!user.id || !user.phone) {
+            throw new NotFoundException(`User with phone ${phone} does not have a phone number`);
+        }
+            
+        // send otp to user phone
+        const subject = this.options.smsVerification?.message || 'SMS OTP Verification';
+        await verificationType.sendVerification(user, { type: 'sms-otp', purpose: 'sms-verification', via: 'sms' },
+            this.options, this.cacheManager, subject
+        )
+        return { success: true, message: `OTP sent to ${phone}` };
     }
     
     async resetPassword(token: string, newPassword: string): Promise<TUser> {

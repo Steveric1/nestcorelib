@@ -45,12 +45,24 @@ export class CoreAuthController<TUser extends BaseUser, TCreateDto=Partial<BaseU
         return await this.authService.verifyOtp(otp, email);
     }
 
+    @Post('verify-phone-otp')
+    async verifyPhoneOtp(@Body() data: { otp: string, phone: string }): Promise<{ success: true, message: string }> {
+        const { otp, phone } = data;
+        return await this.authService.verifyPhoneOtp(otp, phone);
+    }
+
     @Post('resend-otp')
     async resendOtp(@Body() data: { email: string }): Promise<{ success: true, message: string }> {
         const { email } = data;
         return await this.authService.resendOtp(email);
     }
 
+    @Post('resend-phone-otp')
+    async resendPhoneOtp(@Body() data: { phone: string }): Promise<{ success: true, message: string }> {
+        const { phone } = data;
+        return await this.authService.resendPhoneOtp(phone);
+    }
+    
     @Post('forgot-password')
     async forgotPassword(@Body() data: { email: string }): Promise<void> {
         const { email } = data;

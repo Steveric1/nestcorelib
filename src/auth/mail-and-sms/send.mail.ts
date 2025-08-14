@@ -1,5 +1,5 @@
 import { AUTH_CONFIG_TOKEN, AuthModuleOptions } from "../interfaces/auth-module-options.interface";
-import { Mailer } from "../interfaces/mail.interface";
+import { Mailer } from "../interfaces/mail-sms.interface";
 import * as nodeMailer from "nodemailer";
 import { Inject, Logger, OnModuleInit } from "@nestjs/common";
 

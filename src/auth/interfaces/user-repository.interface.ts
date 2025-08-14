@@ -21,4 +21,6 @@ export interface ResourceRepositoryInterface<TUser extends BaseUser = BaseUser, 
     verifyEmail(token: string): Promise<{ success: true, message: string }>;
     verifyOtp(otp: string, email: string): Promise<{ success: true, message: string }>;
     resendOtp(email: string): Promise<{ success: true, message: string }>;
+    verifyPhoneOtp(otp: string, phone: string): Promise<{ success: true, message: string }>;
+    resendPhoneOtp(phone: string): Promise<{ success: true, message: string }>;
 }

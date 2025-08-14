@@ -6,7 +6,7 @@ import { PrismaResourceRepository } from "./prisma-user.repository";
 import { AUTH_CONFIG_TOKEN, ENTITY_TOKEN, AuthModuleOptions, PRISMA_CLIENT_TOKEN } from "../interfaces/auth-module-options.interface";
 import { JwtService } from "@nestjs/jwt";
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Mailer, MAILER } from "../interfaces/mail.interface";
+import { Mailer, MAILER } from "../interfaces/mail-sms.interface";
 import type { Cache } from 'cache-manager';
 
 

@@ -11,6 +11,15 @@ export interface AuthModuleOptions {
     allowedRoles?: string[];
     roleEntity?: any;
     adminEntity?: any;
+    cache?: {
+        provider: 'memory' | 'redis' | 'custom';
+        config?: {
+            ttl: number;
+            host?: string;
+            port?: number;
+            password?: string;
+        }
+    }
     jwt?: {
         secret: string;
         expiresIn?: string;
@@ -41,8 +50,18 @@ export interface AuthModuleOptions {
         subject?: string;
         htmlBuilder?: (token: string, user?: BaseUser) => string;
     };
+    smsVerification?: {
+        provider: 'twilio' | 'vonage' | 'custom';
+        apiKey?: string;
+        apiSecret?: string;
+        from?: string;
+        message?: (otp: string) => string; // Function to format the message
+        senderId?: string;
+        customSender?: (to: string, message: string) => Promise<void>;
+    }
     enable2FA?: boolean;
     enableOtp?: boolean;
+    enableSms?: boolean;
 
     enableEmailVerification?: boolean;
     rateLimiting?: boolean;

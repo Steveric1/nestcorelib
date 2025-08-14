@@ -5,6 +5,7 @@ export interface BaseUser {
     email?: string;
     password?: string;
     username?: string;
+    phone?: string;
     role?: string | null;
     verified?: boolean;
 }

@@ -86,7 +86,15 @@ export class CoreAuthService<TUser extends BaseUser, TCreateDto = Partial<BaseUs
         return this.authRepo.verifyOtp(otp, email);
     }
 
+    async verifyPhoneOtp(otp: string, phone: string): Promise<{ success: true, message: string }> {
+        return this.authRepo.verifyPhoneOtp(otp, phone);
+    }
+
     async resendOtp(email: string): Promise<{ success: true, message: string }> {
         return this.authRepo.resendOtp(email);
+    }
+
+    async resendPhoneOtp(phone: string): Promise<{ success: true, message: string }> {
+        return this.authRepo.resendPhoneOtp(phone);
     }
 }

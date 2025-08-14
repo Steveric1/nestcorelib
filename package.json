@@ -44,13 +44,21 @@
     "@nestjs/typeorm": "^11.0.0",
     "typeorm": "^0.3.25",
     "@prisma/client": "^6.11.0",
-    "nodemailer": "^7.0.5"
+    "nodemailer": "^7.0.5",
+    "twilio": "^5.0.0",
+    "@vonage/server-sdk": "*"
   },
   "peerDependenciesMeta": {
     "@prisma/client": {
       "optional": true
     },
     "typeorm": {
+      "optional": true
+    },
+    "twilio": {
+      "optional": true
+    },
+    "@vonage/server-sdk": {
       "optional": true
     }
   }

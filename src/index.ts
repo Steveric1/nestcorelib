@@ -36,12 +36,18 @@ export * from './auth/dto/update.dto';
 // BaseUser
 export * from './auth/interfaces/base-user.interface'
 
-// Mailer
-export * from './auth/mail/send.mail';
+// Mailer And Sms
+export * from './auth/mail-and-sms/send.mail';
+export * from './auth/mail-and-sms/send.sms';
 
 // Guards
 export * from './auth/guards/jwt-auth.guards';
 
 // JWT Strategies
 export * from './auth/jwt-strategies/jwt.strategies';
+
+// Rate Limiting
+export * from './auth/rate-limit/rate.limit.guards';
+export * from './auth/rate-limit/rate.limit.interface';
+export * from './auth/rate-limit/rate-limit.module';
 

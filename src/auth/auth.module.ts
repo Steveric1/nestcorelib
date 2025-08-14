@@ -16,9 +16,10 @@ import { PassportModule } from "@nestjs/passport";
 import { CoreAuthController } from "./auth.controller";
 import { CoreAuthService } from "./auth.service";
 import { AccessJwtStrategy, RefreshJwtStrategy } from "./jwt-strategies/jwt.strategies";
-import { DefaultMailer } from "./mail/send.mail";
-import { MAILER } from "./interfaces/mail.interface";
+import { DefaultMailer } from "./mail-and-sms/send.mail";
+import { MAILER, SMS_SENDER } from "./interfaces/mail-sms.interface";
 import { CacheModule } from "@nestjs/cache-manager";
+import { CorelibSmsSender } from "./mail-and-sms/send.sms";
 
 
 export class CoreAuthResourceModule {
@@ -30,6 +31,7 @@ export class CoreAuthResourceModule {
             RefreshJwtStrategy,
             CoreAuthService,
             { provide: MAILER, useClass: DefaultMailer},
+            { provide: SMS_SENDER, useClass: CorelibSmsSender },
         ];
 
         const typeOrmEntities = options.orm === 'typeorm' ? [options.Entity] : [];
@@ -58,6 +60,10 @@ export class CoreAuthResourceModule {
             providers.push(TypeOrmRepoFactory);
         }
 
+        const CacheModuleOptions = options.cache?.provider === 'memory' ? CacheModule.register({ isGlobal: true }) :
+            options.cache?.provider === 'redis' || options.cache?.provider === 'custom' ? 
+            CacheModule.register({ isGlobal: true, ...options.cache?.config }) : CacheModule.register({ isGlobal: true });
+
         return {
             module: CoreAuthResourceModule,
             imports: [
@@ -81,10 +87,11 @@ export class CoreAuthResourceModule {
                 }),
 
                 PassportModule.register({ defaultStrategy: 'access-jwt' }),
-                CacheModule.register({ isGlobal: true }),
+                // Register Cache based on what is provided in options
+                CacheModuleOptions,
             ],
             providers,
-            exports: [...providers, JwtModule, PassportModule, MAILER],
+            exports: [...providers, JwtModule, PassportModule, MAILER, CacheModuleOptions],
         };
     }
 
@@ -94,6 +101,7 @@ export class CoreAuthResourceModule {
             useFactory: options.useFactory!,
             inject: options.inject || [],
         };
+
 
         const jwtModule = JwtModule.registerAsync({
             inject: [AUTH_CONFIG_TOKEN],
@@ -116,12 +124,23 @@ export class CoreAuthResourceModule {
             })
         })
 
+        const cacheModule = CacheModule.registerAsync({
+            inject: [AUTH_CONFIG_TOKEN],
+            useFactory: async (config: AuthModuleOptions) => {
+                if (config.cache?.provider === 'redis' || config.cache?.provider === 'custom') {
+                    return { isGlobal: true, ...config.cache.config };
+                }
+                return { isGlobal: true }; // memory by default
+            }
+        });
+        
+
         return {
             module: CoreAuthResourceModule,
             imports: [
                 ...(options.imports || []),
                 PassportModule.register({ defaultStrategy: 'access-jwt' }),
-                CacheModule.register({ isGlobal: true }),
+                cacheModule,
                 jwtModule,
 
             ],
@@ -131,9 +150,10 @@ export class CoreAuthResourceModule {
                 RefreshJwtStrategy,
                 CoreAuthService,
                 { provide: MAILER, useClass: DefaultMailer},
+                { provide: SMS_SENDER, useClass: CorelibSmsSender },
                 ...(options.extraProviders || [])
             ],
-            exports: [JwtModule, PassportModule, asyncProvider, MAILER],
+            exports: [JwtModule, PassportModule, asyncProvider, MAILER, cacheModule],
         };
     }
 }

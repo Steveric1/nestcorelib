@@ -53,6 +53,35 @@ implements ResourceRepositoryInterface<TUser, TCreateDto> {
             throw new ConflictException(`User with email ${(data as any)?.email} already exist`);
         }
 
+        // check if phone number exist
+        const numberExist = await this.model.findUnique({
+            where: { phone: (data as any)?.phone }
+        })
+
+        if (numberExist) {
+            throw new ConflictException(`User with phone ${(data as any)?.phone} already exist`);
+        }
+
+        // Check if user phone number already exist and throw an appropriate error
+        if (this.options.enableSms === true && (data as any)?.phone) {
+            const phoneExist = await this.model.findUnique({
+                where: { phone: (data as any)?.phone }
+            });
+
+            if (phoneExist) {
+                throw new ConflictException(`User with phone ${(data as any)?.phone} already exist`);
+            }
+
+            // check email too
+            const emailExist = await this.model.findUnique({
+                where: { email: (data as any)?.email }
+            });
+
+            if (emailExist) {
+                throw new ConflictException(`User with email ${(data as any)?.email} already exist`);
+            }
+        }
+
         // Hash user password
         const hashPassword = await this.hashPassword((data as any)?.password);
 
@@ -190,33 +219,16 @@ implements ResourceRepositoryInterface<TUser, TCreateDto> {
     }
 
     async login(data: TCreateDto): Promise<any> {
-        const user = await this.model.findUnique({
-            where: { email: (data as any)?.email }
-        })
-
-        if (!user) {
-            throw new UnauthorizedException(`Invalid email or password for user with email ${(data as any)?.email}`);
-        }
-
-        // check if user is verified and this check when consumer set verified in thier schema
-        if (user?.verified === false) {
-            throw new UnauthorizedException(`User with email ${(data as any)?.email} is not verified`);
-        }
-
-        // Verify password
-        const isPasswordValid = await this.verifyHashPassword((data as any)?.password, user.password);
-        if (!isPasswordValid) {
-            throw new UnauthorizedException(`Invalid password for user with email ${(data as any)?.email}`)
-        }
-
-        // remove password
-        const userWithoutPassword = stripPassword(user);
-
-        // Generate token
-        const tokens = this.generateToken(userWithoutPassword);
-        return {
-            user: userWithoutPassword,
-            token: tokens
+        if (this.options.enableSms === true) {
+            const user = await this.model.findUnique({
+                where: { phone: (data as any)?.phone }
+            });
+            return await this.loginWithPhone(user, data);
+        } else {
+            const user = await this.model.findUnique({
+                where: { email: (data as any)?.email }
+            })
+            return await this.loginWithEmail(user, data)
         }
     }
 
@@ -344,9 +356,8 @@ implements ResourceRepositoryInterface<TUser, TCreateDto> {
             }
 
             // update the user to set verified to true
-            user.verified = true;
-            await this.model.updateMany({
-                where: { phone: user.id },
+            await this.model.update({
+                where: { id: user.id },
                 data: { verified: true }
             });
 
@@ -579,4 +590,57 @@ implements ResourceRepositoryInterface<TUser, TCreateDto> {
         return await bcrypt.compare(plainPassword, hashPasword);
     }
 
+    private async loginWithEmail(user: any, data: TCreateDto) {
+        if (!user) {
+            throw new UnauthorizedException(`Invalid email or password for user with email ${(data as any)?.email}`);
+        }
+
+        // check if user is verified and this check when consumer set verified in thier schema
+        if (user?.verified === false) {
+            throw new UnauthorizedException(`User with email ${(data as any)?.email} is not verified`);
+        }
+
+        // Verify password
+        const isPasswordValid = await this.verifyHashPassword((data as any)?.password, user.password);
+        if (!isPasswordValid) {
+            throw new UnauthorizedException(`Invalid password for user with email ${(data as any)?.email}`)
+        }
+
+        // remove password
+        const userWithoutPassword = stripPassword(user);
+
+        // Generate token
+        const tokens = this.generateToken(userWithoutPassword);
+        return {
+            user: userWithoutPassword,
+            token: tokens
+        }
+    }
+
+    private async loginWithPhone(user: any, data: TCreateDto) {
+        if (!user) {
+            throw new UnauthorizedException(`Invalid phone or password for user with phone number ${(data as any)?.phone}`);
+        }
+
+        // check if user is verified and this check when consumer set verified in thier schema
+        if (user?.verified === false) {
+            throw new UnauthorizedException(`User with phone ${(data as any)?.phone} is not verified`);
+        }
+
+        // Verify password
+        const isPasswordValid = await this.verifyHashPassword((data as any)?.password, user.password);
+        if (!isPasswordValid) {
+            throw new UnauthorizedException(`Invalid password for user with phone ${(data as any)?.phone}`)
+        }
+
+        // remove password
+        const userWithoutPassword = stripPassword(user);
+
+        // Generate token
+        const tokens = this.generateToken(userWithoutPassword);
+        return {
+            user: userWithoutPassword,
+            token: tokens
+        }
+    }
 };

@@ -56,7 +56,7 @@ export const verificationType = {
             const otp = this.generateOtp();
             console.log('Generated SMS OTP:', otp);
             // set key
-            const key = this.otpKey(user.phone || user.email, purpose);
+            const key = this.otpKey(user.phone, purpose);
             // set otp in cache
             await cache.set(key, otp, { ttl: 60 * 5}); // 5 minutes
             if (!user.phone) {

@@ -3,11 +3,11 @@ import { BaseUser } from "./base-user.interface";
 
 
 export interface AuthModuleOptions {
-    orm: 'typeorm' | 'prisma';
+    orm?: 'typeorm' | 'prisma';
     Entity?: any; //For TypeORM Users: class
     PrismaModelName?: keyof PrismaClient; //For Prisma Users: string
     PrismaClient?: any;
-    defaultRole: string;
+    defaultRole?: string;
     allowedRoles?: string[];
     roleEntity?: any;
     adminEntity?: any;

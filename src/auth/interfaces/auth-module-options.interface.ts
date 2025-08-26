@@ -15,7 +15,7 @@ export interface AuthModuleOptions {
         provider: 'memory' | 'redis' | 'custom';
         config?: {
             ttl: number;
-            store?: string;
+            store?: any;
             host?: string;
             port?: number;
             password?: string;

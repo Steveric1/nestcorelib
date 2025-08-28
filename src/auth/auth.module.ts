@@ -107,23 +107,24 @@ export class CoreAuthResourceModule {
     imports: [
       ...(options.imports || []),
       PassportModule.register({ defaultStrategy: 'access-jwt' }),
+
+      // 👇 make AUTH_CONFIG_TOKEN visible to CacheModule
       CacheModule.registerAsync({
         inject: [AUTH_CONFIG_TOKEN],
         useFactory: async (config: AuthModuleOptions) => {
           if (config.cache?.provider === 'redis' || config.cache?.provider === 'custom') {
             return { isGlobal: true, ...config.cache.config };
           }
-          return { isGlobal: true };
+          return { isGlobal: true }; // memory by default
         },
+        imports: [CoreAuthResourceModule], // <-- important!
       }),
+
       JwtModule.registerAsync({
         inject: [AUTH_CONFIG_TOKEN],
         useFactory: async (config: AuthModuleOptions) => ({
           ...(config.jwt?.algorithm === 'RS256' || config.jwt?.algorithm === 'ES256'
-            ? {
-                privateKey: config.jwt?.privateKey,
-                publicKey: config.jwt?.publicKey,
-              }
+            ? { privateKey: config.jwt?.privateKey, publicKey: config.jwt?.publicKey }
             : { secret: config.jwt?.secret }),
           signOptions: {
             expiresIn: config.jwt?.expiresIn || '1h',
@@ -133,10 +134,11 @@ export class CoreAuthResourceModule {
             ...(config.jwt?.algorithm ? { algorithm: config.jwt.algorithm } : {}),
           },
         }),
+        imports: [CoreAuthResourceModule], // <-- same here
       }),
     ],
     providers: [
-      asyncProvider, // ✅ makes AUTH_CONFIG_TOKEN visible to CacheModule & JwtModule
+      asyncProvider, // registered in this module
       AccessJwtStrategy,
       RefreshJwtStrategy,
       CoreAuthService,

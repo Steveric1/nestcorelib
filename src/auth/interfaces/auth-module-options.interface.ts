@@ -81,7 +81,7 @@ export interface AuthModuleAsyncOptions {
     isGlobal?: boolean;
 }
 
-export const AUTH_CONFIG_TOKEN = 'AUTH_MODULE_OPTIONS';
+export const AUTH_CONFIG_TOKEN = 'AUTH_CONFIG_TOKEN';
 export const ENTITY_TOKEN = 'ENTITY_TOKEN';
 export const ROLE_ENTITY_TOKEN = 'ROLE_ENTITY';
 export const ADMIN_ENTITY_TOKEN = 'ADMIN_ENTITY';

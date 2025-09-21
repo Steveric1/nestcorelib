@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/require-await */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable prettier/prettier */
 // modules/auth-resource.module.ts
 import { DynamicModule, Provider } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -91,63 +95,69 @@ export class CoreAuthResourceModule {
                 CacheModuleOptions,
             ],
             providers,
-            exports: [...providers, JwtModule, PassportModule, MAILER, CacheModuleOptions],
+            exports: [...providers, JwtModule, PassportModule, MAILER, CoreAuthService, CacheModuleOptions],
         };
     }
 
     static forRootAsync(options: AuthModuleAsyncOptions): DynamicModule {
-  const asyncProvider = {
-    provide: AUTH_CONFIG_TOKEN,
-    useFactory: options.useFactory!,
-    inject: options.inject || [],
-  };
+        const asyncProvider = {
+            provide: AUTH_CONFIG_TOKEN,
+            useFactory: options.useFactory!,
+            inject: options.inject || [],
+        };
 
-  return {
-    module: CoreAuthResourceModule,
-    imports: [
-      ...(options.imports || []),
-      PassportModule.register({ defaultStrategy: 'access-jwt' }),
 
-      // 👇 make AUTH_CONFIG_TOKEN visible to CacheModule
-      CacheModule.registerAsync({
-        inject: [AUTH_CONFIG_TOKEN],
-        useFactory: async (config: AuthModuleOptions) => {
-          if (config.cache?.provider === 'redis' || config.cache?.provider === 'custom') {
-            return { isGlobal: true, ...config.cache.config };
-          }
-          return { isGlobal: true }; // memory by default
-        },
-        imports: [CoreAuthResourceModule], // <-- important!
-      }),
+        const jwtModule = JwtModule.registerAsync({
+            inject: [AUTH_CONFIG_TOKEN],
+            useFactory: async (config: AuthModuleOptions) => ({
+                 ...(config.jwt?.algorithm === 'RS256' || config.jwt?.algorithm === 'ES256' ?
+                        {
+                            privateKey: config.jwt?.privateKey,
+                            publicKey: config.jwt?.publicKey
+                        } : {
+                            secret: config.jwt?.secret
+                        }
+                    ),
+                signOptions: {
+                    expiresIn: config.jwt?.expiresIn || '1h',
+                    ...(config.jwt?.issuer ? { issuer: config.jwt.issuer } : {}),
+                    ...(config.jwt?.audience ? { audience: config.jwt.audience } : {}),
+                    ...(config.jwt?.subject ? { subject: config.jwt.subject } : {}),
+                    ...(config.jwt?.algorithm ? { algorithm: config.jwt.algorithm } : {})
+                }
+            })
+        })
 
-      JwtModule.registerAsync({
-        inject: [AUTH_CONFIG_TOKEN],
-        useFactory: async (config: AuthModuleOptions) => ({
-          ...(config.jwt?.algorithm === 'RS256' || config.jwt?.algorithm === 'ES256'
-            ? { privateKey: config.jwt?.privateKey, publicKey: config.jwt?.publicKey }
-            : { secret: config.jwt?.secret }),
-          signOptions: {
-            expiresIn: config.jwt?.expiresIn || '1h',
-            ...(config.jwt?.issuer ? { issuer: config.jwt.issuer } : {}),
-            ...(config.jwt?.audience ? { audience: config.jwt.audience } : {}),
-            ...(config.jwt?.subject ? { subject: config.jwt.subject } : {}),
-            ...(config.jwt?.algorithm ? { algorithm: config.jwt.algorithm } : {}),
-          },
-        }),
-        imports: [CoreAuthResourceModule], // <-- same here
-      }),
-    ],
-    providers: [
-      asyncProvider, // registered in this module
-      AccessJwtStrategy,
-      RefreshJwtStrategy,
-      CoreAuthService,
-      { provide: MAILER, useClass: DefaultMailer },
-      { provide: SMS_SENDER, useClass: CorelibSmsSender },
-      ...(options.extraProviders || []),
-    ],
-    exports: [JwtModule, PassportModule, asyncProvider, MAILER, CacheModule],
-  };
-}
+        const cacheModule = CacheModule.registerAsync({
+            inject: [AUTH_CONFIG_TOKEN],
+            useFactory: async (config: AuthModuleOptions) => {
+                if (config.cache?.provider === 'redis' || config.cache?.provider === 'custom') {
+                    return { isGlobal: true, ...config.cache.config };
+                }
+                return { isGlobal: true }; // memory by default
+            }
+        });
+        
 
+        return {
+            module: CoreAuthResourceModule,
+            imports: [
+                ...(options.imports || []),
+                PassportModule.register({ defaultStrategy: 'access-jwt' }),
+                cacheModule,
+                jwtModule,
+
+            ],
+            providers: [
+                asyncProvider,
+                AccessJwtStrategy,
+                RefreshJwtStrategy,
+                CoreAuthService,
+                { provide: MAILER, useClass: DefaultMailer},
+                { provide: SMS_SENDER, useClass: CorelibSmsSender },
+                ...(options.extraProviders || [])
+            ],
+            exports: [JwtModule, PassportModule, asyncProvider, MAILER, CoreAuthService, cacheModule],
+        };
+    }
 }
